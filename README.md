@@ -1,5 +1,3 @@
-![cover Logo](ChatGPT_Real_time_Web_Search/images/cover.png)
-
 # 🔍 GPT Function Calling with Real-Time Web Search
 
 This project demonstrates how to extend the capabilities of GPT models beyond their knowledge cut-off date by integrating **real-time web search** using **function calling**. The system uses the OpenAI API with `streamlit` as the interface and `duckduckgo_search` for fetching up-to-date information from the web.

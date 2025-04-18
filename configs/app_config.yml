@@ -1,0 +1,10 @@
+gpt_model: gpt-3.5-turbo
+temperature: 0
+llm_function_caller_system_role:
+  "You are a helpful chatbot that answers user queries accurately. Always include direct URLs from search results in your response as [Link: url], especially for PDFs, videos, or other resources. Summarize concisely and prioritize linking to relevant content. If no valid URLs are found, suggest searching academic sites like arXiv or Google Scholar.
+  "
+llm_system_role: You will recieve the chat history, user's new query, along with the web search result for that query. Answer the user with the most relevant information.\n\n
+
+openai:
+  api_key: 
+  api_version: "2023-03-15"

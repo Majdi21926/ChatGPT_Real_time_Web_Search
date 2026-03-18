@@ -4,6 +4,69 @@
 from duckduckgo_search import DDGS
 from typing import List, Optional
 import time
+import os
+
+
+class TavilySearch:
+    """Search provider using the Tavily API."""
+
+    _client = None
+
+    @classmethod
+    def _get_client(cls):
+        if cls._client is None:
+            from tavily import TavilyClient
+            api_key = os.environ.get('TAVILY_API_KEY', '')
+            if not api_key:
+                raise ValueError("TAVILY_API_KEY is not set")
+            cls._client = TavilyClient(api_key=api_key)
+        return cls._client
+
+    @staticmethod
+    def retrieve_results(query: str, max_results: Optional[int] = 5) -> List:
+        """
+        Retrieve search results using the Tavily API.
+        """
+        try:
+            client = TavilySearch._get_client()
+            response = client.search(query=query, max_results=max_results)
+            results = [
+                {
+                    "title": r.get("title", "Untitled"),
+                    "url": r.get("url", ""),
+                    "description": r.get("content", "No description")
+                }
+                for r in response.get("results", [])
+                if r.get("url", "")
+            ]
+            print(f"TavilySearch.retrieve_results for '{query}': {results}")
+            return results
+        except Exception as e:
+            print(f"Error in TavilySearch.retrieve_results for '{query}': {str(e)}")
+            return []
+
+    @staticmethod
+    def search_text(query: str, max_results: Optional[int] = 5) -> List:
+        """
+        Search for text using the Tavily API.
+        """
+        try:
+            client = TavilySearch._get_client()
+            response = client.search(query=query, max_results=max_results, search_depth="advanced")
+            results = [
+                {
+                    "title": r.get("title", "Untitled"),
+                    "url": r.get("url", ""),
+                    "description": r.get("content", "No description")
+                }
+                for r in response.get("results", [])
+                if r.get("url", "")
+            ]
+            print(f"TavilySearch.search_text for '{query}': {results}")
+            return results
+        except Exception as e:
+            print(f"Error in TavilySearch.search_text for '{query}': {str(e)}")
+            return []
 
 class WebSearch:
     @staticmethod

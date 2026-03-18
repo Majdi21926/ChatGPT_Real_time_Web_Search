@@ -3,11 +3,14 @@ import inspect
 import json
 from inspect import Parameter
 from pydantic import create_model, BaseModel
-from utils.web_search import WebSearch
+from utils.web_search import WebSearch, TavilySearch
 import openai
 from utils.load_config import LoadConfig
 
 APPCFG = LoadConfig()
+
+# Set of function names that Tavily can handle
+_TAVILY_SUPPORTED = {'retrieve_results', 'search_text'}
 client = openai.OpenAI(api_key=APPCFG.api_key)
 model_map = {
     "GPT-3.5": "gpt-3.5-turbo",
@@ -48,9 +51,44 @@ class Apputils:
         ]
 
     @staticmethod
+    def _dispatch_search(func_name: str, func_args: dict, provider: str) -> List:
+        """
+        Dispatch a search call to the appropriate provider.
+        For functions not supported by Tavily, always use DuckDuckGo.
+        """
+        use_tavily = provider == 'tavily' and func_name in _TAVILY_SUPPORTED
+
+        if use_tavily:
+            func = getattr(TavilySearch, func_name, None)
+            if func:
+                return func(**func_args)
+
+        # DuckDuckGo dispatch
+        ddgs_funcs = {
+            'retrieve_results': WebSearch.retrieve_results,
+            'search_text': WebSearch.search_text,
+            'search_pdf': WebSearch.search_pdf,
+            'search_image': WebSearch.search_image,
+            'search_video': WebSearch.search_video,
+            'search_news': WebSearch.search_news,
+            'get_instant': WebSearch.get_instant,
+            'search_map': WebSearch.search_map,
+            'give_suggestion': WebSearch.give_suggestion,
+            'user_proxy_for_text_web_search': WebSearch.user_proxy_for_text_web_search,
+        }
+        func = ddgs_funcs.get(func_name)
+        if func:
+            return func(**func_args)
+
+        print(f"Unknown function: {func_name}")
+        return []
+
+    @staticmethod
     def execute_json_function(response) -> List:
         """
         Execute a function based on the response from an OpenAI ChatCompletion API call.
+        Routes to Tavily or DuckDuckGo based on the configured search_provider.
+        Falls back to Tavily on DuckDuckGo rate-limit errors for supported functions.
         """
         try:
             tool_call = response.choices[0].message.tool_calls[0]
@@ -61,33 +99,23 @@ class Apputils:
             print(f"Error parsing tool call: {str(e)}")
             return []
 
+        provider = APPCFG.search_provider
         try:
-            if func_name == 'retrieve_results':
-                result = WebSearch.retrieve_results(**func_args)
-            elif func_name == 'search_text':
-                result = WebSearch.search_text(**func_args)
-            elif func_name == 'search_pdf':
-                result = WebSearch.search_pdf(**func_args)
-            elif func_name == 'search_image':
-                result = WebSearch.search_image(**func_args)
-            elif func_name == 'search_video':
-                result = WebSearch.search_video(**func_args)
-            elif func_name == 'search_news':
-                result = WebSearch.search_news(**func_args)
-            elif func_name == 'get_instant':
-                result = WebSearch.get_instant(**func_args)
-            elif func_name == 'search_map':
-                result = WebSearch.search_map(**func_args)
-            elif func_name == 'give_suggestion':
-                result = WebSearch.give_suggestion(**func_args)
-            elif func_name == 'user_proxy_for_text_web_search':
-                result = WebSearch.user_proxy_for_text_web_search(**func_args)
-            else:
-                print(f"Unknown function: {func_name}")
-                return []
+            result = Apputils._dispatch_search(func_name, func_args, provider)
             print(f"Function {func_name} result: {result}")
             return result
         except Exception as e:
+            # Fallback to Tavily on DuckDuckGo rate-limit if provider is duckduckgo
+            if "Ratelimit" in str(e) and provider == 'duckduckgo' and func_name in _TAVILY_SUPPORTED and APPCFG.tavily_api_key:
+                print(f"DuckDuckGo rate limit hit for {func_name}. Falling back to Tavily...")
+                try:
+                    fallback_func = getattr(TavilySearch, func_name)
+                    result = fallback_func(**func_args)
+                    print(f"Tavily fallback result for {func_name}: {result}")
+                    return result
+                except Exception as tavily_err:
+                    print(f"Tavily fallback also failed: {str(tavily_err)}")
+                    return []
             print(f"Error executing function {func_name}: {str(e)}")
             return []
 

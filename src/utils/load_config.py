@@ -18,6 +18,10 @@ class LoadConfig:
         self.llm_system_role = config['llm_system_role']
         self.llm_function_caller_system_role = config['llm_function_caller_system_role']
         
+        # Search provider configuration
+        self.search_provider = config.get('search_provider', 'duckduckgo')
+        self.tavily_api_key = os.environ.get('TAVILY_API_KEY') or config.get('tavily_api_key') or ''
+
         # Charger la clé API depuis le fichier YAML
         self.api_key = config['openai']['api_key']
         self.api_version = config['openai']['api_version']

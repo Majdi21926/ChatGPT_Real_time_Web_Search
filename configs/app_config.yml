@@ -5,6 +5,9 @@ llm_function_caller_system_role:
   "
 llm_system_role: You will recieve the chat history, user's new query, along with the web search result for that query. Answer the user with the most relevant information.\n\n
 
+search_provider: duckduckgo  # 'duckduckgo' or 'tavily'
+tavily_api_key:  # Can also be set via TAVILY_API_KEY env var
+
 openai:
-  api_key: 
+  api_key:
   api_version: "2023-03-15"

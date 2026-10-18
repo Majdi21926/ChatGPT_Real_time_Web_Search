@@ -16,6 +16,14 @@ model_map = {
 
 class Apputils:
     @staticmethod
+    def text_search_provider():
+        """Resolve the configured provider without changing specialized tools."""
+        if APPCFG.search_provider == 'parallel':
+            from utils.parallel_search import ParallelSearch
+            return ParallelSearch
+        return WebSearch
+
+    @staticmethod
     def jsonschema(f) -> Dict:
         """
         Generate a JSON schema for the input parameters of the given function.
@@ -35,8 +43,8 @@ class Apputils:
         Wrap web search functions and generate JSON schemas for each.
         """
         return [
-            Apputils.jsonschema(WebSearch.retrieve_results),
-            Apputils.jsonschema(WebSearch.search_text),
+            Apputils.jsonschema(Apputils.text_search_provider().retrieve_results),
+            Apputils.jsonschema(Apputils.text_search_provider().search_text),
             Apputils.jsonschema(WebSearch.search_pdf),
             Apputils.jsonschema(WebSearch.get_instant),
             Apputils.jsonschema(WebSearch.search_image),
@@ -63,9 +71,9 @@ class Apputils:
 
         try:
             if func_name == 'retrieve_results':
-                result = WebSearch.retrieve_results(**func_args)
+                result = Apputils.text_search_provider().retrieve_results(**func_args)
             elif func_name == 'search_text':
-                result = WebSearch.search_text(**func_args)
+                result = Apputils.text_search_provider().search_text(**func_args)
             elif func_name == 'search_pdf':
                 result = WebSearch.search_pdf(**func_args)
             elif func_name == 'search_image':

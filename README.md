@@ -53,6 +53,32 @@ streamlit run src/app.py
 - If needed, the DuckDuckGo web search tool is called with the relevant query.
 - GPT gets the real-time search result and integrates it into its response.
 
+### Optional Parallel web search
+
+To use [Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp)
+for general web searches, install the requirements above and set this in
+`configs/app_config.yml` before starting the app:
+
+```yaml
+search_provider: parallel
+```
+
+Parallel provides free anonymous web search, powered by Fast mode, with no
+Parallel account or API key. Search titles, source URLs and excerpts are passed
+to the chatbot for its answer. The app still requires its OpenAI configuration.
+The MCP client requires Python 3.10 or later.
+
+This setting selects the provider for `retrieve_results` and `search_text`.
+DuckDuckGo remains the default when the setting is absent or `duckduckgo`.
+Specialized tools (PDFs, images, videos, news, instant answers, suggestions and
+proxy searches) continue to use DuckDuckGo. Parallel text search is general web
+search; it does not apply DuckDuckGo's region, safe-search or past-year filters.
+`max_results` limits the returned results to 1–20 (default 5); the service may
+return fewer. Requests have a 30-second total timeout. Service errors, including
+anonymous quota exhaustion, use the app's existing empty-result handling and
+never switch providers automatically. To switch back, set `search_provider` to
+`duckduckgo`.
+
 ## 📁 Project Structure
 ```bash
 .

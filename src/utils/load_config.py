@@ -15,6 +15,9 @@ class LoadConfig:
 
         self.gpt_model = config['gpt_model']
         self.temperature = config['temperature']
+        self.search_provider = config.get('search_provider', 'duckduckgo')
+        if self.search_provider not in ('duckduckgo', 'parallel'):
+            raise ValueError("search_provider must be 'duckduckgo' or 'parallel'")
         self.llm_system_role = config['llm_system_role']
         self.llm_function_caller_system_role = config['llm_function_caller_system_role']
         
